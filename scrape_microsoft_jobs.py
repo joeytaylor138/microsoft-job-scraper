@@ -26,7 +26,7 @@ def scrape_microsoft_jobs():
     print("Launching browser...")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=true)
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page()
 
         page.goto(URL)
