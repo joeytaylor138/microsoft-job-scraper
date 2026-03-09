@@ -1,14 +1,11 @@
 name: Microsoft Jobs Scraper
-
 on:
   schedule:
     - cron: '0 9 * * *'  # Runs every day at 9AM UTC
   workflow_dispatch:  # Allows manual trigger from GitHub
-
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,7 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install playwright beautifulsoup4 azure-storage-blob
+          pip install playwright beautifulsoup4 azure-storage-blob azure-communication-email python-dotenv
           playwright install chromium
           playwright install-deps chromium
 
@@ -28,3 +25,16 @@ jobs:
         env:
           AZURE_CONNECTION_STRING: ${{ secrets.AZURE_CONNECTION_STRING }}
         run: python "scrape_microsoft_jobs.py"
+
+      - name: Run email alert
+        env:
+          AZURE_CONNECTION_STRING: ${{ secrets.AZURE_CONNECTION_STRING }}
+          ACS_CONNECTION_STRING: ${{ secrets.ACS_CONNECTION_STRING }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: python "job_scraper_email_alert.py"
+
+      - name: Run visualizer
+        env:
+          AZURE_CONNECTION_STRING: ${{ secrets.AZURE_CONNECTION_STRING }}
+        run: python "visualize_jobs.py"
