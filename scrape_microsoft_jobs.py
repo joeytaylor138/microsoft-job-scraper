@@ -1,6 +1,8 @@
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from azure.storage.blob import BlobServiceClient
+from dotenv import load_dotenv
+load_dotenv()
 import csv
 import os
 URL = "https://apply.careers.microsoft.com/careers"
@@ -100,7 +102,7 @@ def scrape_microsoft_jobs():
                 text = job.get_text(" ", strip=True)
                 title = parse_title(text)
 
-                link = href if href.startswith("http") else f"https://careers.microsoft.com{href}"
+                link = href if href.startswith("http") else f"https://apply.careers.microsoft.com{href}"
 
                 if not any(j["Link"] == link for j in jobs_data):
                     jobs_data.append({
@@ -134,3 +136,5 @@ def upload_to_azure():
 if __name__ == "__main__":
     scrape_microsoft_jobs()
     upload_to_azure()
+
+
