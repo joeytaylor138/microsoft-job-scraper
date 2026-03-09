@@ -1,4 +1,6 @@
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings
+from dotenv import load_dotenv
+load_dotenv()
 import csv
 import os
 from collections import Counter
@@ -117,7 +119,7 @@ def upload_chart():
     blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
     blob_client = blob_service_client.get_blob_client(container=WEB_CONTAINER, blob=HTML_FILE)
     with open(HTML_FILE, "rb") as f:
-        blob_client.upload_blob(f, overwrite=True, content_settings={"content_type": "text/html"})
+        blob_client.upload_blob(f, overwrite=True, content_settings=ContentSettings(content_type="text/html"))
     print("Chart uploaded.")
 
 if __name__ == "__main__":
