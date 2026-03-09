@@ -1,20 +1,18 @@
 import csv
 import io
 import os
-from dotenv import load_dotenv
-load_dotenv()
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from azure.communication.email import EmailClient
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 AZURE_CONNECTION_STRING = os.environ.get("AZURE_CONNECTION_STRING")
-ACS_CONNECTION_STRING   = os.environ.get("ACS_CONNECTION_STRING")
+ACS_CONNECTION_STRING   = os.environ.get("ACS_CONNECTION_STRING")   # Azure Communication Services
 CONTAINER_NAME          = "python-jobs"
 TODAY_BLOB              = "microsoft_jobs.csv"
 PREVIOUS_BLOB           = "microsoft_jobs_previous.csv"
-SENDER_EMAIL            = os.environ.get("SENDER_EMAIL")                                # Replace with your verified sender email in Azure Communication Services
-RECIPIENT_EMAIL         = os.environ.get("RECIPIENT_EMAIL")                          # Replace with your email
+SENDER_EMAIL            = "donotreply@YOUR_DOMAIN.azurecomm.net"     # Replace with your ACS sender email
+RECIPIENT_EMAIL         = "you@example.com"                          # Replace with your email
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -76,6 +74,32 @@ def build_email_html(new_jobs):
     </html>"""
 
 
+def send_no_new_jobs_email():
+    email_client = EmailClient.from_connection_string(ACS_CONNECTION_STRING)
+    message = {
+        "senderAddress": SENDER_EMAIL,
+        "recipients": {
+            "to": [{"address": RECIPIENT_EMAIL}]
+        },
+        "content": {
+            "subject": "Microsoft Jobs Alert - No New Jobs Today",
+            "html": f"""
+            <html>
+            <body style="font-family:Arial,sans-serif; color:#333;">
+                <h2>No New Jobs Today</h2>
+                <p>The daily scan ran successfully on {datetime.today().strftime('%B %d, %Y')} but no new Microsoft job postings were found in Washington, DC today.</p>
+                <p style="color:#888; font-size:12px;">Sent by Microsoft Job Scraper Alert System</p>
+            </body>
+            </html>
+            """,
+            "plainText": f"The daily scan ran successfully on {datetime.today().strftime('%B %d, %Y')} but no new Microsoft job postings were found in Washington, DC today."
+        }
+    }
+    poller = email_client.begin_send(message)
+    result = poller.result()
+    print(f"No new jobs email sent! Message ID: {result['id']}")
+
+
 def send_email(new_jobs):
     email_client = EmailClient.from_connection_string(ACS_CONNECTION_STRING)
 
@@ -117,7 +141,7 @@ def main():
     if new_jobs:
         send_email(new_jobs)
     else:
-        print("No new jobs since yesterday. No email sent.")
+        send_no_new_jobs_email()
 
     # Rotate: save today's CSV as the new "previous" for tomorrow
     fieldnames = ["Title", "Company", "Location", "Job Type", "Link"]
